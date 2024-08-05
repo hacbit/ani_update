@@ -64,7 +64,7 @@ fn main() -> Result<(), String> {
 
     if args.len() < 2 {
         info!("Usage: {} <archive> [extract_dir]", args[0]);
-        return Ok(());
+        return end();
     }
 
     // The .zip / .dmg file path
@@ -93,33 +93,35 @@ fn main() -> Result<(), String> {
     if app.exists() {
         if let Err(e) = std::fs::remove_file(&app).map_err(|e| e.to_string()) {
             error!("Failed to remove the old Ani app: {}", e);
-            return Ok(());
+            return end();
         }
     }
     if PathBuf::from("Ani.ico").exists() {
         if let Err(e) = std::fs::remove_file("Ani.ico").map_err(|e| e.to_string()) {
             error!("Failed to remove the old Ani icon: {}", e);
-            return Ok(());
+            return end();
         }
     }
     if PathBuf::from("app").exists() {
         if let Err(e) = std::fs::remove_dir_all("app").map_err(|e| e.to_string()) {
             error!("Failed to remove the old Ani app: {}", e);
-            return Ok(());
+            return end();
         }
     }
     if PathBuf::from("runtime").exists() {
         if let Err(e) = std::fs::remove_dir_all("runtime").map_err(|e| e.to_string()) {
             error!("Failed to remove the old Ani runtime: {}", e);
-            return Ok(());
+            return end();
         }
     }
+
+    success!("Old Ani app removed");
 
     let files = match extract(archive_path) {
         Ok(f) => f,
         Err(e) => {
             error!("Failed to extract : {}", e);
-            return Ok(());
+            return end();
         }
     };
 
@@ -132,14 +134,14 @@ fn main() -> Result<(), String> {
         if path.exists() && path.is_file() {
             if let Err(e) = std::fs::remove_file(&path).map_err(|e| e.to_string()) {
                 error!("Failed to remove the old file: {}", e);
-                return Ok(());
+                return end();
             }
         }
 
         if !path.exists() {
             if let Err(e) = std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string()) {
                 error!("Failed to create the directory: {}", e);
-                return Ok(());
+                return end();
             }
         }
 
@@ -147,17 +149,27 @@ fn main() -> Result<(), String> {
             Ok(f) => f,
             Err(e) => {
                 error!("Failed to create the file: {}", e);
-                return Ok(());
+                return end();
             }
         };
         
         if let Err(e) = file.write_all(&content).map_err(|e| e.to_string()) {
             error!("Failed to write the file: {}", e);
-            return Ok(());
+            return end();
         }
     }
 
     success!("Now you can close this window and run the Ani app");
+
+    end()
+}
+
+fn end() -> Result<(), String> {
+    info!("Press <Enter>/<Return> to exit...");
+
+    let mut s = String::new();
+
+    std::io::stdin().read_line(&mut s).map_err(|e| e.to_string())?;
 
     Ok(())
 }
