@@ -101,8 +101,9 @@ fn main() -> Result<(), String> {
     let try_remove = |path: &PathBuf| {
         if path.exists() {
             for _ in 0..5 {
-                if if path.is_file() { 
-                    std::fs::remove_file(path) 
+                if let Err(err) = if path.is_file() { 
+                    // std::fs::remove_file(path) 
+                    remove_file_force(path)
                 } else { 
                     debug_assert!(path.is_dir());
 
@@ -116,7 +117,8 @@ fn main() -> Result<(), String> {
                             .as_deref()
                             .unwrap_or(&[])
                     )
-                }.is_err() {
+                } {
+                    error!("{}", err.to_string());
                     info!("Wait for blocked files: {}", path.display());
                     std::thread::sleep(std::time::Duration::from_secs(1));
                 } else {
@@ -243,12 +245,27 @@ fn remove_dir_filter(dir: impl AsRef<Path>, filter_paths: &[impl AsRef<Path>]) -
             if path.is_dir() {
                 remove_dir_filter(&path, filter_paths)?;
             } else {
-                fs::remove_file(&path)?;
+                // fs::remove_file(&path)?;
+                remove_file_force(&path)?;
             }
         }
     }
 
     Ok(())
+}
+
+fn remove_file_force(path: &Path) -> io::Result<()> {
+    fs::remove_file(path).or_else(|err| {
+        if err.kind() == io::ErrorKind::PermissionDenied {
+            warn!("Permission denied, try to change the file permission: {}", path.display());
+            let mut perms = fs::metadata(path)?.permissions();
+            perms.set_readonly(false);
+            fs::set_permissions(path, perms)?;
+            fs::remove_file(path)
+        } else {
+            Err(err)
+        }
+    })
 }
 
 #[cfg(any(
@@ -272,4 +289,23 @@ fn extract(path: PathBuf) -> Result<HashMap<String, Vec<u8>>, String> {
     }
 
     Ok(files)
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn change_perm() {
+        let path = PathBuf::from("E:\\Ani\\test\\Ani\\Ani.exe");
+
+        let mut perms = fs::metadata(&path).unwrap().permissions();
+        perms.set_readonly(false);
+        fs::set_permissions(&path, perms).unwrap();
+
+        println!("{:?}", fs::metadata(&path).unwrap().permissions());
+
+
+    }
 }
