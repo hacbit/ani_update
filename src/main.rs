@@ -28,28 +28,42 @@ macro_rules! local_time {
     };
 }
 
+macro_rules! log {
+    ($level:ident, $color:ident, $($arg:tt),*) => {
+        println!(
+            "[{}] {}",
+            local_time!(),
+            format!(
+                "[{}] {}", 
+                stringify!($level).to_uppercase(), 
+                format!($($arg)*)
+            ).$color()
+        )
+    };
+}
+
 macro_rules! info { 
     ($($arg:tt)*) => {
-        println!("{} {}", format!("[INFO {}]", local_time!()).bright_cyan(), format!($($arg)*).bright_cyan());
+        log!(info, bright_cyan, $($arg),*)
     }
 }
 
 macro_rules! success {
     ($($arg:tt)*) => {
-        println!("{} {}", format!("[SUCCESS {}]", local_time!()).bright_green(), format!($($arg)*).bright_green());
+        log!(success, bright_green, $($arg),*)
     };
 }
 
 macro_rules! warn {
     ($($arg:tt)*) => {
-        println!("{} {}", format!("[WARN {}]", local_time!()).bright_yellow(), format!($($arg)*).bright_yellow());
+        log!(warn, bright_yellow, $($arg),*)
     };
 }
 
 macro_rules! error {
     ($($arg:tt)*) => {
-        eprintln!("{} {}", format!("[ERROR {}]", local_time!()).bright_red(), format!($($arg)*).bright_red());
-    }
+        log!(error, bright_red, $($arg),*)
+    };
 }
 
 #[cfg(any(
@@ -307,5 +321,16 @@ mod test {
         println!("{:?}", fs::metadata(&path).unwrap().permissions());
 
 
+    }
+
+    #[test]
+    fn test_log() {
+        println!(
+            "[{}] {}",
+            local_time!(),
+            format!("[INFO] {}", "Ani app updater started").bright_cyan()
+        );
+
+        info!("Ani app updater started");
     }
 }
