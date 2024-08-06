@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::ExitStatus;
 use zip::read::ZipArchive;
 use cfg_if::cfg_if;
 use sysinfo::System;
@@ -212,7 +213,13 @@ fn main() -> Result<(), String> {
 
     success!("Now you can close this window and run the Ani app");
 
-    end()
+    if let Err(e) = start_ani().map_err(|e| e.to_string()) {
+        error!("Failed to start the Ani app: {}", e);
+
+        return end();
+    }
+
+    Ok(())
 }
 
 fn end() -> Result<(), String> {
@@ -305,6 +312,11 @@ fn extract(path: PathBuf) -> Result<HashMap<String, Vec<u8>>, String> {
     Ok(files)
 }
 
+fn start_ani() -> io::Result<ExitStatus> {
+    std::process::Command::new("Ani")
+        .spawn()?
+        .wait()
+}
 
 #[cfg(test)]
 mod test {
