@@ -1,15 +1,38 @@
 //! Environment variable `LANG` is used to determine
 //! the language of the program.
 
+use cfg_if::cfg_if;
+
 pub enum Language {
     En,
     Zh,
 }
 
+cfg_if!(
+    if #[cfg(target_os = "windows")] {
+        extern "C" {
+            fn GetSystemDefaultUILanguage() -> u16;
+        }
+
+        fn get_env_lang() -> Option<String> {
+            let lang_id = unsafe { GetSystemDefaultUILanguage() };
+            match lang_id {
+                0x0804 => Some("zh-CN".to_string()),
+                0x0409 => Some("en-US".to_string()),
+                _ => None,
+            }
+        }
+    } else {
+        fn get_env_lang() -> Option<String> {
+            std::env::var("LANG").ok()
+        }
+    }
+);
+
 impl Language {
     pub fn get() -> Self {
-        match std::env::var("LANG") {
-            Ok(lang) if lang.starts_with("zh") => Language::Zh,
+        match get_env_lang() {
+            Some(lang) if lang.starts_with("zh") => Language::Zh,
             _ => Language::En,
         }
     }
