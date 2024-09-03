@@ -9,3 +9,4 @@ chrono = "0.4.38"
 colored = "2.1.0"
 sysinfo = "0.30.13"
 zip = "2.1.5"
+ani_update_macro = { path = "crates/ani_update_macro" }
