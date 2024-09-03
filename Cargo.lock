@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "ani_update"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ani_update_macro",
  "cfg-if",
@@ -48,7 +48,7 @@ dependencies = [
 
 [[package]]
 name = "ani_update_macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quote",
  "syn",
