@@ -10,8 +10,6 @@ use chrono::Local;
 
 mod lang;
 
-use lang::Lang;
-
 cfg_if!(
     if #[cfg(target_os = "macos")] {
         const APP_NAME: &str = "Ani";
@@ -77,15 +75,15 @@ macro_rules! error {
 ))]
 fn main() -> Result<(), String> {
     std::panic::set_hook(Box::new(|panic_info| {
-        error!("{}: {}", lang!(ErrorOccurred), panic_info);
+        error!("{}", error_occurred!(panic_info));
     }));
 
-    info!("{}", lang!(UpdaterStarted));
+    info!("{}", updater_started!());
 
     let args = std::env::args().collect::<Vec<String>>();
 
     if args.len() < 2 {
-        info!("{}", lang!(Usage).replace("{}", &args[0]));
+        info!("{}", usage!(&args[0]));
         return end();
     }
 
@@ -95,26 +93,26 @@ fn main() -> Result<(), String> {
     // The directory to extract the .zip / .dmg file
     let extract_path = if args.len() > 2 {
         if args.len() > 3 {
-            warn!("{} `{}`", lang!(TooManyArguments), args[3..].join(" "));
+            warn!("{}", too_many_args!(args[3..].join(" ")));
         }
         PathBuf::from(&args[2])
     } else {
         match std::env::current_dir().map_err(|e| e.to_string()) {
             Ok(dir) => dir,
             Err(e) => {
-                error!("{}: {}", lang!(FailedToGetCurrentDir), e);
+                error!("{}", failed_get_current_dir!(e));
                 return end();
             }
         }
     };
 
-    info!("{}", lang!(WaitAniAppExit));
+    info!("{}", wait_app_exit!());
 
     if wait_app_exit().is_ok() {
-        info!("{}", lang!(AniAppIsClosed));
+        info!("{}", ani_closed!());
     }
 
-    info!("{}", lang!(ExtractTo).replacen("{}", &archive_path.display().to_string(), 1).replace("{}", &extract_path.display().to_string()));
+    info!("{}", extract_to!(archive_path.display(), extract_path.display()));
 
     let try_remove = |path: &PathBuf| {
         if path.exists() {
@@ -137,7 +135,7 @@ fn main() -> Result<(), String> {
                     )
                 } {
                     error!("{}", err.to_string());
-                    info!("{}", lang!(WaitBlock).replace("{}", &path.display().to_string()));
+                    info!("{}", wait_blocked!(path.display().to_string()));
                     std::thread::sleep(std::time::Duration::from_secs(1));
                 } else {
                     return Ok(());
@@ -170,12 +168,12 @@ fn main() -> Result<(), String> {
         return end();
     }
 
-    success!("{}", lang!(AniRemoved));
+    success!("{}", ani_removed!());
 
     let files = match extract(archive_path) {
         Ok(f) => f,
         Err(e) => {
-            error!("{}", lang!(ExtractFailed).replace("{}", &e));
+            error!("{}", extract_failed!(e));
             return end();
         }
     };
@@ -183,19 +181,19 @@ fn main() -> Result<(), String> {
     for (name, content) in files {
         let path = extract_path.join(name);
         // Create path if not exist
-        info!("{}: {}", lang!(Extracting), path.display());
+        info!("{}", extracting!(path.display()));
         
         // path is a file
         if path.exists() && path.is_file() {
             if let Err(e) = std::fs::remove_file(&path).map_err(|e| e.to_string()) {
-                error!("{}: {}", lang!(RemoveFailed), e);
+                error!("{}", remove_failed!(e));
                 return end();
             }
         }
 
         if !path.exists() {
             if let Err(e) = std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string()) {
-                error!("{}: {}", lang!(CreateDirFailed), e);
+                error!("{}", create_dir_failed!(e));
                 return end();
             }
         }
@@ -203,24 +201,23 @@ fn main() -> Result<(), String> {
         let mut file = match File::create(&path).map_err(|e| e.to_string()) {
             Ok(f) => f,
             Err(e) => {
-                error!("{}: {}", lang!(CreateFileFailed), e);
+                error!("{}", create_file_failed!(e));
                 return end();
             }
         };
         
         if let Err(e) = file.write_all(&content).map_err(|e| e.to_string()) {
-            error!("{}: {}", lang!(WriteFailed), e);
+            error!("{}", write_failed!(e));
             return end();
         }
     }
 
-    success!("{}", lang!(UpdateCompleted));
+    success!("{}", update_finish!());
 
-    success!("{}", lang!(StartAniApp));
+    success!("{}", start_ani!());
 
     if let Err(e) = start_ani().map_err(|e| e.to_string()) {
-        error!("{}: {}", lang!(StartAniFailed), e);
-
+        error!("{}", start_ani_failed!(e));
         return end();
     }
 
@@ -228,7 +225,7 @@ fn main() -> Result<(), String> {
 }
 
 fn end() -> Result<(), String> {
-    info!("{}", lang!(End));
+    info!("{}", end!());
 
     let mut s = String::new();
 
@@ -283,7 +280,7 @@ fn remove_dir_filter(dir: impl AsRef<Path>, filter_paths: &[impl AsRef<Path>]) -
 fn remove_file_force(path: &Path) -> io::Result<()> {
     fs::remove_file(path).or_else(|err| {
         if err.kind() == io::ErrorKind::PermissionDenied {
-            warn!("{}: {}", lang!(PermissionDenied), path.display());
+            warn!("{}", permission_denied!(path.display()));
             let mut perms = fs::metadata(path)?.permissions();
             
             cfg_if! {

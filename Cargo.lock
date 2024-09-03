@@ -36,13 +36,22 @@ dependencies = [
 
 [[package]]
 name = "ani_update"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
+ "ani_update_macro",
  "cfg-if",
  "chrono",
  "colored",
  "sysinfo",
  "zip",
+]
+
+[[package]]
+name = "ani_update_macro"
+version = "0.1.1"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -519,9 +528,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
+checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
@@ -621,9 +630,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"
-version = "2.0.72"
+version = "2.0.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc4b9b9bf2add8093d3f2c0204471e951b2285580335de42f9d2534f3ae7a8af"
+checksum = "9f35bcdf61fd8e7be6caf75f429fdca8beb3ed76584befb503b1569faee373ed"
 dependencies = [
  "proc-macro2",
  "quote",
